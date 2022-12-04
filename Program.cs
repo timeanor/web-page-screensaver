@@ -45,8 +45,9 @@ namespace pl.polidea.lab.Web_Page_Screensaver
 
                     formsList.Add(screensaverForm);
                 }
-
+                Console.WriteLine("running application with forms list {0} ", formsList.Count);
                 Application.Run(new MultiFormContext(formsList));
+                
             }
         }
     }

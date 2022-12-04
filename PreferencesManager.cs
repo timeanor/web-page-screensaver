@@ -10,6 +10,7 @@
 
     public class PreferencesManager 
     {
+        private static ConfigMan configMan = new ConfigMan();
         private const string MULTISCREEN_PREF = "MultiScreenMode";
         private const string URL_PREF = "Url";
         private const string INTERVAL_PREF = "RotationInterval";
@@ -19,7 +20,7 @@
         private const string SCREEN_SPECIFIC_PREF_NAME_FORMATSTRING = "{0}Screen{1}";
 
         private const string MULTISCREEN_PREF_DEFAULT = "Separate";
-        private const string URL_PREF_PRIMARYSCREEN_DEFAULT = "https://docs.google.com/presentation/d/e/2PACX-1vTfXGUG6KM8p5bLBnZeRx4vUmoqM0Pi7n0Wq-TRTgpwTyezq0bfi-CNhJxkasfuc64CB2hAT2GMhlc0/pub?start=true&loop=true&delayms=1000";
+        private string URL_PREF_PRIMARYSCREEN_DEFAULT = configMan.BrowserURL;
         private const string URL_PREF_NONPRIMARYSCREEN_DEFAULT = "";
         private const string INTERVAL_PREF_DEFAULT = "30";
         private const string RANDOMIZE_PREF_DEFAULT = "False";
@@ -40,6 +41,7 @@
                 if (effectiveScreensListField == null)
                 {
                     effectiveScreensListField = new List<BasicScreenInfo>();
+
                     switch (MultiScreenMode)
                     {
                         case MultiScreenModeItem.Span:
@@ -127,7 +129,8 @@
         private List<List<string>> urlsByScreen;
         public List<string> GetUrlsByScreen(int screenNum)
         {
-            int startAtScreenNum = MultiScreenMode == MultiScreenModeItem.Mirror ? 0 : screenNum;
+            //int startAtScreenNum =; MultiScreenMode == MultiScreenModeItem.Mirror ? 0 : screenNum
+            int startAtScreenNum = configMan.StartAtScreenNum;
             // special treatment for URLs for the 'last' effective screen
             // this can happen either due to actual screen removal as noted in the LoadUrlsAllScreens() method,
             // OR because we are in Span mode, making just one effective screen,
@@ -236,6 +239,7 @@
 
         public void SavePreferences()
         {
+            Console.WriteLine("Writing Reg settings");
             reg.SetValue(MULTISCREEN_PREF, MultiScreenMode);
             reg.SetValue(CLOSE_ON_ACTIVITY_PREF, CloseOnActivity);
             SaveUrlsAllScreens();

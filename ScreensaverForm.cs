@@ -8,7 +8,6 @@ using System.Text;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using System.Diagnostics;
-using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 
 namespace pl.polidea.lab.Web_Page_Screensaver
@@ -25,13 +24,14 @@ namespace pl.polidea.lab.Web_Page_Screensaver
         private PreferencesManager prefsManager = new PreferencesManager();
 
         private int screenNum;
-        private int complete;
 
         private bool startup_Complete = false;
-        private bool max_slideCount_found = false;        
+      
         private bool end_slide_Navigated = false;
+        private bool max_slideCount_found = false;
         private int max_slide_count = 0;
-       
+
+
         private string firstURI ;
         private string endURI = null;
         
@@ -66,44 +66,13 @@ namespace pl.polidea.lab.Web_Page_Screensaver
         }
 
         private void ScreensaverForm_Load(object sender, EventArgs e)
-        {
-            if (Urls.Any())
-            {
-                if (Urls.Count > 1)
-                {
-                    // Shuffle the URLs if necessary
-                    shuffleOrder = prefsManager.GetRandomizeFlagByScreen(screenNum);
-                    if (shuffleOrder)
-                    {
-                        random = new Random();
+        {         
 
-                        int n = urls.Count;
-                        while (n > 1)
-                        {
-                            n--;
-                            int k = random.Next(n + 1);
-                            var value = urls[k];
-                            urls[k] = urls[n];
-                            urls[n] = value;
-                        }
-                    }
-
-                    // Set up timer to rotate to the next URL
-                    timer = new Timer();
-                    timer.Interval = prefsManager.GetRotationIntervalByScreen(screenNum) * 1000;
-                    timer.Tick += (s, ee) => RotateSite();
-                    timer.Start();
-                }
-
-                // Display the first site in the list
                 RotateSite();
 
-                StartTime = DateTime.Now;
-            }
-            else
-            {
-                webBrowser.Visible = false;
-            }
+              
+
+            
         }
 
         private void BrowseTo(string url)
@@ -111,12 +80,12 @@ namespace pl.polidea.lab.Web_Page_Screensaver
             // Disable the user event handler while navigating
             Application.RemoveMessageFilter(userEventHandler);
 
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                webBrowser.Visible = false;
-            }
-            else
-            {
+            //if (string.IsNullOrWhiteSpace(url))
+            //{
+            //    webBrowser.Visible = false;
+            //}
+            //else
+            //{
                 webBrowser.Visible = true;
                 try
                 {
@@ -129,7 +98,7 @@ namespace pl.polidea.lab.Web_Page_Screensaver
                 {
                     // This can happen if IE pops up a window that isn't closed before the next call to Navigate()
                 }
-            }
+            //}
             Application.AddMessageFilter(userEventHandler);
         }
 
@@ -169,20 +138,37 @@ namespace pl.polidea.lab.Web_Page_Screensaver
 
         private void leftArrow_Click(object sender, EventArgs e)
         {
-            webBrowser.Focus();
-            SendKeys.Send("{LEFT}");
+            backward_Slide();
         }
 
         private void rightArrow_Click(object sender, EventArgs e)
         {
-            webBrowser.Focus();
-            SendKeys.Send("{RIGHT}");
+            advance_Slide();
         }
 
         private void button_minimize_Click(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Minimized;
-        }   
+        }
+
+        private void timer_Elapsed_NextSlide(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            advance_Slide();
+
+        }
+
+
+        private void advance_Slide()
+        {
+            webBrowser.Focus();
+            SendKeys.Send("{RIGHT}");
+        }
+
+        private void backward_Slide()
+        {
+            webBrowser.Focus();
+            SendKeys.Send("{LEFT}");
+        }
 
 
         /// <summary>
@@ -198,7 +184,7 @@ namespace pl.polidea.lab.Web_Page_Screensaver
         private void webBrowser_DocumentCompleted(object sender, EventArgs e)
         {
             var justLoaded = this.webBrowser.Url.ToString();
-            this.label1.Text = justLoaded;
+
             Console.WriteLine($"URI Completed: {justLoaded}");
 
             if (!end_slide_Navigated)
@@ -215,14 +201,17 @@ namespace pl.polidea.lab.Web_Page_Screensaver
             } else if (max_slide_count == 0)
             {
 
-                max_slide_count = resolve_SlideNumber(this.webBrowser.Document.Body.OuterHtml);              
+                max_slide_count = resolve_SlideNumber(this.webBrowser.Document.Body.OuterHtml) - 1;              
                
                 BrowseTo(firstURI);
 
             } else if (!startup_Complete)
             {
                 navigate_to_RandomSlide();
-                this.webBrowser.DocumentCompleted -= webBrowser_DocumentCompleted;  // we dont need this to run until restart
+            
+                this.leftArrow.Visible = true;
+                this.RandomToggle.Visible = true;
+                this.rightArrow.Visible = true;
                 startup_Complete = true;
             }
         }
@@ -260,6 +249,18 @@ namespace pl.polidea.lab.Web_Page_Screensaver
             webBrowser.Focus();
             SendKeys.Send(sendkeys);
         }
+
+        private void RandomToggle_Click(object sender, EventArgs e)
+        {
+            //shuffle = shuffle ? false : true;
+
+            //this.RandomToggle.Text = shuffle ? "Shuffle: ON" : "Shuffle: OFF";
+
+            navigate_to_RandomSlide();
+        }
+
+
+
     }
 
     public class GlobalUserEventHandler : IMessageFilter
